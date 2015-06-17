@@ -8,8 +8,8 @@ using namespace std;
 
 //Entrada: String a analizar
 //Retorno:
-//		true en caso que satisfaga la expresion regular (A+C+G+T)^(*)GT^(+)CT^(*)(A+C+G+T)^(*)
-//		false en caso contrario
+//		"si" en caso que satisfaga la expresion regular (A+C+G+T)^(*)GT^(+)CT^(*)(A+C+G+T)^(*)
+//		"no" en caso contrario
 
 _Monitor BoundedBuffer {
 	//uCondition full, empty;
@@ -45,6 +45,12 @@ string BoundedBuffer::remove() {
 			return elem;
 };
 
+/*inline bool existeArchivo(const string& nombreArchivo) {
+  struct stat buffer;   
+  return (stat (nombreArchivo.c_str(), &buffer) == 0); 
+}
+*/
+
 _Task Producer {
 
 	BoundedBuffer &Buffer;
@@ -63,6 +69,137 @@ _Task Producer {
 				item = to_string(rand() % 100 + 1);
 				cout << "insertando:" << item << endl; 
 				Buffer.insert( item );
+			}
+		}
+};
+
+_Task Productora {
+
+	BoundedBuffer &BufferArchivoEntrada;
+	string &nombreArchivoEntrada;
+	
+	public:
+
+		Productora( BoundedBuffer &buf, string &nombreArchivo ) : BufferArchivoEntrada( buf ), nombreArchivoEntrada ( nombreArchivo )  {}
+
+	private:
+
+		inline bool existeArchivo(const string& nombreArchivo) {
+			struct stat buffer;   
+			return (stat (nombreArchivo.c_str(), &buffer) == 0); 
+		}
+
+		void main() {
+
+			if (existeArchivo (nombreArchivoEntrada)){
+
+				string linea;
+
+				ifstream archivoEntrada;
+
+				archivoEntrada.open(nombreArchivoEntrada.c_str());
+
+				cout << "El archivo: '" <<nombreArchivoEntrada<< "' ha sido abierto correctamente."<< endl;
+
+				while(!archivoEntrada.eof()){
+    		
+    				archivoEntrada >> linea;
+    				BufferArchivoEntrada.insert( linea );
+    				cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
+				}
+
+				archivoEntrada.close();
+			}
+
+			else{
+
+				cout << "El archivo: '" <<nombreArchivoEntrada<< "' No existe."<< endl;
+				exit(0);
+			}
+
+		}
+};
+
+_Task Reconocedora {
+
+	BoundedBuffer &BufferArchivoEntrada; // sched. interno o externo
+	BoundedBuffer &BufferArchivoSalida; // sched. interno o externo
+
+	public:
+
+		Reconocedora( BoundedBuffer &bufferEntrada, BoundedBuffer &bufferSalida ) : BufferArchivoEntrada( bufferEntrada ), BufferArchivoSalida(bufferSalida)  {}
+
+	private:
+
+		string check(string entrada){
+			int estado = 0;
+			string pertenece="no";
+
+			for (int i=0;i<entrada.size();i++){
+
+				if (entrada[i] == 'G' && estado ==0){
+					estado=1;
+				}
+				else if (estado==0 && entrada[i]!='G'){
+					estado=0;
+				}
+
+				else if (estado==1 &&  entrada[i]=='C'){
+					estado=0;
+				}
+
+				else if ((estado==1 || estado==2) && entrada[i] == 'T'){
+					estado=2;
+				}
+
+				else if ((estado==1 || estado==2) && entrada[i]=='G'){
+					estado=1;
+				}
+
+				else if ((estado==0 || estado==1 || estado==2) && entrada[i]=='A'){
+					estado=0;
+				}
+
+				else if (estado==2 && entrada[i]=='C'){
+					estado=3;
+					pertenece="si";
+					break;
+				}
+			}
+
+			return pertenece;
+		}
+
+		void main() {
+
+			string item = BufferArchivoEntrada.remove();
+
+			if ( item != "-1" ){
+
+				item+=" "+check(item);
+				cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
+				BufferArchivoSalida.insert( item );
+    			cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
+
+			}
+		}
+};
+
+_Task Escritora {
+
+	BoundedBuffer &BufferArchivoSalida;
+	string &nombreArchivoSalida;
+	
+	public:
+
+		Escritora( BoundedBuffer &buf, string &nombreArchivo ) : BufferArchivoSalida( buf ), nombreArchivoSalida ( nombreArchivo )  {}
+
+	private:
+
+		void main() {
+			string item = BufferArchivoSalida.remove();
+			if ( item != "-1" ){
+				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
 			}
 		}
 };
@@ -90,7 +227,7 @@ _Task Consumer {
 
 ///////////////////////////////////////////
 
-string reconocedor(string entrada){
+/*string reconocedor(string entrada){
 	int estado = 0;
 	string pertenece="no";
 
@@ -128,17 +265,15 @@ string reconocedor(string entrada){
 	return pertenece;
 }
 
-inline bool existeArchivo(const string& nombreArchivo) {
-  struct stat buffer;   
-  return (stat (nombreArchivo.c_str(), &buffer) == 0); 
-}
+*/
 
 void uMain::main(){
 
 	string nombreArchivo="in.txt";
-	string linea;
+	const int NoOfCons = 2, NoOfProds = 3;
+	//string linea;
 
-	ifstream archivoEntrada;
+	/*ifstream archivoEntrada;
 
 	if (existeArchivo (nombreArchivo)){
 
@@ -160,7 +295,7 @@ void uMain::main(){
 
 	archivoEntrada.close();
 
-	const int NoOfCons = 2, NoOfProds = 3;
+	*/
 
 	BoundedBuffer buf; // Monitor
 
