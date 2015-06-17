@@ -13,20 +13,21 @@ using namespace std;
 _Monitor BoundedBuffer {
 	//uCondition full, empty;
 	int front, back, count;
-	int elements[20];
+	string elements[20];
 
 	public:
+
 		BoundedBuffer() : front(0), back(0), count(0) {}
 		
 		_Nomutex int query() { return count; }
 
-		void insert (int elem);
-		int remove() ;
+		void insert (string elem);
+		string remove() ;
 
 };
 
 //Metodos BoundedBuffer 
-void BoundedBuffer::insert(int elem) { 
+void BoundedBuffer::insert(string elem) { 
 			if (count == 20) _Accept( remove );//empty.wait();
 			elements[back] = elem;
 			back = (back+1)% 20;
@@ -34,9 +35,9 @@ void BoundedBuffer::insert(int elem) {
 			//full.signal();
 }
 
-int BoundedBuffer::remove() {
+string BoundedBuffer::remove() {
 			if (count == 0) _Accept( insert );//full.wait();
-			int elem = elements[front];
+			string elem = elements[front];
 			front = (front+1)%20;
 			count -= 1;
 			//empty.signal();
@@ -55,10 +56,11 @@ _Task Producer {
 
 		void main() {
 			const int NoOfItems = rand() % 20;
-			int item;
+			string item;
 			for (int i = 1; i <= NoOfItems; i += 1) {
 				yield( rand() % 20 ); // duerma un rato
-				item = rand() % 100 + 1;
+				item = to_string(rand() % 100 + 1);
+				cout << "insertando:" << item << endl; 
 				Buffer.insert( item );
 			}
 		}
@@ -75,10 +77,11 @@ _Task Consumer {
 	private:
 
 		void main() {
-			int item;
+			string item;
 			for ( ;; ) {
 				item = Buffer.remove();
-				if ( item == -1 ) break;
+				cout << "consumiendo: " <<item << endl;
+				if ( item == "-1" ) break;
 				yield( rand() % 20 );
 			}
 		}
@@ -125,14 +128,40 @@ bool reconocedor(string entrada){
 }
 
 void uMain::main(){
+
 	string entrada="AGAAAGGCATAAATATATTAGTATTTGTGTACATCTGTTCCTTCCTGTGTGACCCTAAGT";
+	
 	if (reconocedor(entrada)==true){
 		cout << "si"<< endl;
 	}
+
 	else{
 		cout << "no"<< endl;
 	}
-}
+
+	const int NoOfCons = 2, NoOfProds = 3;
+
+	BoundedBuffer buf; // Monitor
+
+	Consumer *cons[NoOfCons]; // Tareas Consumidoras
+
+	Producer *prods[NoOfProds]; // Tareas Productoras
+
+	for ( int i = 0; i < NoOfCons; i += 1 )
+		cons[i] = new Consumer( buf );
+
+	for ( int i = 0; i < NoOfProds; i += 1 )
+		prods[i] = new Producer( buf );
+
+	for ( int i = 0; i < NoOfProds; i += 1 )
+		delete prods[i];
+
+	for ( int i = 0; i < NoOfCons; i += 1 )
+		buf.insert( "-1" );
+
+	for ( int i = 0; i < NoOfCons; i += 1 )
+		delete cons[i];
+	}
 
 //Forma de compilar: u++ main.cc -o main
 //A pesar de que la funcion main no tiene como entrada argc y argv, en realidad si existen!
