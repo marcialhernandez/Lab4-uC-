@@ -128,31 +128,37 @@ string reconocedor(string entrada){
 	return pertenece;
 }
 
+inline bool existeArchivo(const string& nombreArchivo) {
+  struct stat buffer;   
+  return (stat (nombreArchivo.c_str(), &buffer) == 0); 
+}
+
 void uMain::main(){
 
-	string entrada="AGAAAGGCATAAATATATTAGTATTTGTGTACATCTGTTCCTTCCTGTGTGACCCTAAGT";
-
+	string nombreArchivo="in.txt";
 	string linea;
 
 	ifstream archivoEntrada;
-	archivoEntrada.open ("int.txt");
 
-	if (archivoEntrada.is_open()) {
+	if (existeArchivo (nombreArchivo)){
+
+		archivoEntrada.open(nombreArchivo.c_str());
 
 		cout << "abierto correctamente" << endl;
+
 		while(!archivoEntrada.eof()){
     		archivoEntrada >> linea;
     		cout << linea << " " <<reconocedor(linea)<< endl;
 		}
-
-		archivoEntrada.close();
-
-	}	
+	}
 
 	else{
 
 		cout << "ta malo" << endl;
+
 	}
+
+	archivoEntrada.close();
 
 	const int NoOfCons = 2, NoOfProds = 3;
 
