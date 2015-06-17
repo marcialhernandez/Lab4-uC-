@@ -59,6 +59,7 @@ _Task Producer {
 
 		Producer( BoundedBuffer &buf ) : Buffer( buf ) {}
 
+
 	private:
 
 		void main() {
@@ -77,10 +78,14 @@ _Task Productora {
 
 	BoundedBuffer &BufferArchivoEntrada;
 	string &nombreArchivoEntrada;
-	
+	bool estadoArchivo=false; //indica si se ha leido completamente el archivo, false en caso que no, true en caso que si
+	int cantidadLineasArchivo=0;
+
 	public:
 
 		Productora( BoundedBuffer &buf, string &nombreArchivo ) : BufferArchivoEntrada( buf ), nombreArchivoEntrada ( nombreArchivo )  {}
+		_Nomutex bool estadoLecturaArchivo() { return estadoArchivo; }
+		_Nomutex int cantidadLineasArchivoEntrada() { return cantidadLineasArchivo; }
 
 	private:
 
@@ -105,8 +110,11 @@ _Task Productora {
     		
     				archivoEntrada >> linea;
     				BufferArchivoEntrada.insert( linea );
+    				cantidadLineasArchivo+=1;
     				cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
 				}
+
+				estadoArchivo=true;
 
 				archivoEntrada.close();
 			}
@@ -197,11 +205,21 @@ _Task Escritora {
 	private:
 
 		void main() {
+			string item;
+			for ( ;; ) {
+				item = BufferArchivoSalida.remove();
+				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
+				if ( item == "-1" ) break;
+				//yield( rand() % 20 );
+			}
+		}
+
+		/*void main() {
 			string item = BufferArchivoSalida.remove();
 			if ( item != "-1" ){
 				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
 			}
-		}
+		}*/
 };
 
 _Task Consumer {
@@ -269,8 +287,13 @@ _Task Consumer {
 
 void uMain::main(){
 
-	string nombreArchivo="in.txt";
-	const int NoOfCons = 2, NoOfProds = 3;
+	string nombreArchivoEntrada="in.txt";
+	string nombreArchivoSalida="out.txt";
+
+	//const int NoOfCons = 2, NoOfProds = 3;
+
+	const int cantidadProductoras = 1, cantidadReconocedoras = 9, cantidadEscritoras = 1;
+
 	//string linea;
 
 	/*ifstream archivoEntrada;
@@ -297,27 +320,59 @@ void uMain::main(){
 
 	*/
 
-	BoundedBuffer buf; // Monitor
+	//BoundedBuffer buf; // Monitor///////////
 
-	Consumer *cons[NoOfCons]; // Tareas Consumidoras
+	BoundedBuffer bufferLector,bufferEscritor;
 
-	Producer *prods[NoOfProds]; // Tareas Productoras
+	//Consumer *cons[NoOfCons]; // Tareas Consumidoras
 
-	for ( int i = 0; i < NoOfCons; i += 1 )
+	//Producer *prods[NoOfProds]; // Tareas Productoras
+
+	//Productora *tareasProductoras[cantidadProductoras];
+	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
+	Escritora *tareasEscritoras[cantidadEscritoras];
+
+	/*for ( int i = 0; i < NoOfCons; i += 1 )
 		cons[i] = new Consumer( buf );
 
 	for ( int i = 0; i < NoOfProds; i += 1 )
-		prods[i] = new Producer( buf );
+		prods[i] = new Producer( buf );*/
 
-	for ( int i = 0; i < NoOfProds; i += 1 )
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
+		tareasReconocedoras[i] = new Reconocedora( bufferLector, bufferEscritor );
+
+	//for ( int i = 0; i < cantidadProductoras; i += 1 )
+	Productora *tareaProductora = new Productora( bufferLector, nombreArchivoEntrada );
+
+	for ( int i = 0; i < cantidadEscritoras; i += 1 )
+		tareasEscritoras[i] = new Escritora( bufferEscritor, nombreArchivoSalida );
+
+
+
+	/*for ( int i = 0; i < NoOfProds; i += 1 )
 		delete prods[i];
 
 	for ( int i = 0; i < NoOfCons; i += 1 )
 		buf.insert( "-1" );
 
 	for ( int i = 0; i < NoOfCons; i += 1 )
-		delete cons[i];
-	}
+		delete cons[i];*/
+
+	delete tareaProductora;
+
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
+		bufferLector.insert( "-1" );
+
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
+		delete tareasReconocedoras[i];
+
+	for ( int i = 0; i < cantidadEscritoras; i += 1 )
+		bufferEscritor.insert( "-1" );
+
+	for ( int i = 0; i < cantidadEscritoras; i += 1 )
+		delete tareasEscritoras[i];
+
+}
 
 //Forma de compilar: u++ main.cc -o main
 //A pesar de que la funcion main no tiene como entrada argc y argv, en realidad si existen!
