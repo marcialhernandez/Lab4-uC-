@@ -14,13 +14,33 @@ using namespace std;
 _Monitor BoundedBuffer {
 	//uCondition full, empty;
 	int front, back, count;
+	bool estadoLectura=false;
 	string elements[20];
 
 	public:
 
 		BoundedBuffer() : front(0), back(0), count(0) {}
+
+		void cambiaEstado(bool estadoNuevo){
+			estadoLectura=estadoNuevo;
+		}
+
+		//_Nomutex bool estado(){ return estadoLectura;}
+
+		bool estado(){ return estadoLectura;}
+		int query() { return count; }
+
+		bool estadoTermino(){
+			if (estadoLectura==true && count ==0){
+				return true;
+			}
+
+			else{
+				return false;
+			}
+		}
 		
-		_Nomutex int query() { return count; }
+		//_Nomutex int query() { return count; }
 
 		void insert (string elem);
 		string remove() ;
@@ -78,13 +98,11 @@ _Task Productora {
 
 	BoundedBuffer &BufferArchivoEntrada;
 	string &nombreArchivoEntrada;
-	bool estadoArchivo=false; //indica si se ha leido completamente el archivo, false en caso que no, true en caso que si
 	int cantidadLineasArchivo=0;
 
 	public:
 
 		Productora( BoundedBuffer &buf, string &nombreArchivo ) : BufferArchivoEntrada( buf ), nombreArchivoEntrada ( nombreArchivo )  {}
-		_Nomutex bool estadoLecturaArchivo() { return estadoArchivo; }
 		_Nomutex int cantidadLineasArchivoEntrada() { return cantidadLineasArchivo; }
 
 	private:
@@ -112,9 +130,10 @@ _Task Productora {
     				BufferArchivoEntrada.insert( linea );
     				cantidadLineasArchivo+=1;
     				cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
+
 				}
 
-				estadoArchivo=true;
+				BufferArchivoEntrada.cambiaEstado(true);
 
 				archivoEntrada.close();
 			}
@@ -180,14 +199,18 @@ _Task Reconocedora {
 
 		void main() {
 
-			string item = BufferArchivoEntrada.remove();
+			string item;
 
-			if ( item != "-1" ){
+			while (BufferArchivoEntrada.estadoTermino()!=true){//( BufferArchivoEntrada.estado()==false && BufferArchivoEntrada.query()!=0){
+
+				item = BufferArchivoEntrada.remove();
 
 				item+=" "+check(item);
 				cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
 				BufferArchivoSalida.insert( item );
     			cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
+
+    			if ( BufferArchivoEntrada.estadoTermino()==true ) break;
 
 			}
 		}
