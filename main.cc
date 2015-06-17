@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <iostream>
+#include <fstream>
 #include <string>
 
 using namespace std;
@@ -89,9 +90,9 @@ _Task Consumer {
 
 ///////////////////////////////////////////
 
-bool reconocedor(string entrada){
+string reconocedor(string entrada){
 	int estado = 0;
-	bool pertenece=false;
+	string pertenece="no";
 
 	for (int i=0;i<entrada.size();i++){
 
@@ -120,7 +121,7 @@ bool reconocedor(string entrada){
 
 		else if (estado==2 && entrada[i]=='C'){
 			estado=3;
-			pertenece=true;
+			pertenece="si";
 			break;
 		}
 	}
@@ -130,13 +131,27 @@ bool reconocedor(string entrada){
 void uMain::main(){
 
 	string entrada="AGAAAGGCATAAATATATTAGTATTTGTGTACATCTGTTCCTTCCTGTGTGACCCTAAGT";
-	
-	if (reconocedor(entrada)==true){
-		cout << "si"<< endl;
-	}
+
+	string linea;
+
+	ifstream archivoEntrada;
+	archivoEntrada.open ("int.txt");
+
+	if (archivoEntrada.is_open()) {
+
+		cout << "abierto correctamente" << endl;
+		while(!archivoEntrada.eof()){
+    		archivoEntrada >> linea;
+    		cout << linea << " " <<reconocedor(linea)<< endl;
+		}
+
+		archivoEntrada.close();
+
+	}	
 
 	else{
-		cout << "no"<< endl;
+
+		cout << "ta malo" << endl;
 	}
 
 	const int NoOfCons = 2, NoOfProds = 3;
