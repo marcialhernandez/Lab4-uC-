@@ -5,7 +5,88 @@
 
 using namespace std;
 
-bool automata(string entrada){
+//Entrada: String a analizar
+//Retorno:
+//		true en caso que satisfaga la expresion regular (A+C+G+T)^(*)GT^(+)CT^(*)(A+C+G+T)^(*)
+//		false en caso contrario
+
+_Monitor BoundedBuffer {
+	//uCondition full, empty;
+	int front, back, count;
+	int elements[20];
+
+	public:
+		BoundedBuffer() : front(0), back(0), count(0) {}
+		
+		_Nomutex int query() { return count; }
+
+		void insert (int elem);
+		int remove() ;
+
+};
+
+//Metodos BoundedBuffer 
+void BoundedBuffer::insert(int elem) { 
+			if (count == 20) _Accept( remove );//empty.wait();
+			elements[back] = elem;
+			back = (back+1)% 20;
+			count += 1;
+			//full.signal();
+}
+
+int BoundedBuffer::remove() {
+			if (count == 0) _Accept( insert );//full.wait();
+			int elem = elements[front];
+			front = (front+1)%20;
+			count -= 1;
+			//empty.signal();
+			return elem;
+};
+
+_Task Producer {
+
+	BoundedBuffer &Buffer;
+	
+	public:
+
+		Producer( BoundedBuffer &buf ) : Buffer( buf ) {}
+
+	private:
+
+		void main() {
+			const int NoOfItems = rand() % 20;
+			int item;
+			for (int i = 1; i <= NoOfItems; i += 1) {
+				yield( rand() % 20 ); // duerma un rato
+				item = rand() % 100 + 1;
+				Buffer.insert( item );
+			}
+		}
+};
+
+_Task Consumer {
+
+	BoundedBuffer &Buffer; // sched. interno o externo
+
+	public:
+
+		Consumer( BoundedBuffer &buf ) : Buffer( buf ) {}
+
+	private:
+
+		void main() {
+			int item;
+			for ( ;; ) {
+				item = Buffer.remove();
+				if ( item == -1 ) break;
+				yield( rand() % 20 );
+			}
+		}
+};
+
+///////////////////////////////////////////
+
+bool reconocedor(string entrada){
 	int estado = 0;
 	bool pertenece=false;
 
@@ -45,7 +126,7 @@ bool automata(string entrada){
 
 void uMain::main(){
 	string entrada="AGAAAGGCATAAATATATTAGTATTTGTGTACATCTGTTCCTTCCTGTGTGACCCTAAGT";
-	if (automata(entrada)==true){
+	if (reconocedor(entrada)==true){
 		cout << "si"<< endl;
 	}
 	else{
