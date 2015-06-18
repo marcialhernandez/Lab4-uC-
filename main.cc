@@ -12,7 +12,7 @@ using namespace std;
 //		"no" en caso contrario
 
 _Monitor BoundedBuffer {
-	//uCondition full, empty;
+	
 	int front, back, count;
 	bool estadoLectura=false;
 	string elements[20];
@@ -25,13 +25,8 @@ _Monitor BoundedBuffer {
 			estadoLectura=estadoNuevo;
 		}
 
-		//_Nomutex bool estado(){ return estadoLectura;}
-
-		bool estado(){ return estadoLectura;}
-		int query() { return count; }
-
 		bool estadoTermino(){
-			if (estadoLectura==true && count ==0){
+			if (estadoLectura==true && count <=0){
 				return true;
 			}
 
@@ -39,59 +34,25 @@ _Monitor BoundedBuffer {
 				return false;
 			}
 		}
-		
-		//_Nomutex int query() { return count; }
 
 		void insert (string elem);
 		string remove() ;
 
 };
 
-//Metodos BoundedBuffer 
 void BoundedBuffer::insert(string elem) { 
-			if (count == 20) _Accept( remove );//empty.wait();
+			if (count == 20) _Accept( remove );
 			elements[back] = elem;
 			back = (back+1)% 20;
 			count += 1;
-			//full.signal();
 }
 
 string BoundedBuffer::remove() {
-			if (count == 0) _Accept( insert );//full.wait();
+			if (count == 0) _Accept( insert );
 			string elem = elements[front];
 			front = (front+1)%20;
 			count -= 1;
-			//empty.signal();
 			return elem;
-};
-
-/*inline bool existeArchivo(const string& nombreArchivo) {
-  struct stat buffer;   
-  return (stat (nombreArchivo.c_str(), &buffer) == 0); 
-}
-*/
-
-_Task Producer {
-
-	BoundedBuffer &Buffer;
-	
-	public:
-
-		Producer( BoundedBuffer &buf ) : Buffer( buf ) {}
-
-
-	private:
-
-		void main() {
-			const int NoOfItems = rand() % 20;
-			string item;
-			for (int i = 1; i <= NoOfItems; i += 1) {
-				yield( rand() % 20 ); // duerma un rato
-				item = to_string(rand() % 100 + 1);
-				cout << "insertando:" << item << endl; 
-				Buffer.insert( item );
-			}
-		}
 };
 
 _Task Productora {
@@ -149,8 +110,8 @@ _Task Productora {
 
 _Task Reconocedora {
 
-	BoundedBuffer &BufferArchivoEntrada; // sched. interno o externo
-	BoundedBuffer &BufferArchivoSalida; // sched. interno o externo
+	BoundedBuffer &BufferArchivoEntrada;
+	BoundedBuffer &BufferArchivoSalida;
 
 	public:
 
@@ -201,14 +162,16 @@ _Task Reconocedora {
 
 			string item;
 
-			while (BufferArchivoEntrada.estadoTermino()!=true){//( BufferArchivoEntrada.estado()==false && BufferArchivoEntrada.query()!=0){
+			while (BufferArchivoEntrada.estadoTermino()==false){
 
 				item = BufferArchivoEntrada.remove();
+				if (item!="-1"){
 
 				item+=" "+check(item);
 				cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
 				BufferArchivoSalida.insert( item );
     			cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
+    			}
 
     			if ( BufferArchivoEntrada.estadoTermino()==true ) break;
 
@@ -228,172 +191,54 @@ _Task Escritora {
 	private:
 
 		void main() {
+
 			string item;
 			for ( ;; ) {
+
 				item = BufferArchivoSalida.remove();
+
+				if ( item!= "-1"){
+
 				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
-				if ( item == "-1" ) break;
-				//yield( rand() % 20 );
+
+				}
+
+				else{
+					break;
+				}
 			}
 		}
 
-		/*void main() {
-			string item = BufferArchivoSalida.remove();
-			if ( item != "-1" ){
-				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
-			}
-		}*/
 };
-
-_Task Consumer {
-
-	BoundedBuffer &Buffer; // sched. interno o externo
-
-	public:
-
-		Consumer( BoundedBuffer &buf ) : Buffer( buf ) {}
-
-	private:
-
-		void main() {
-			string item;
-			for ( ;; ) {
-				item = Buffer.remove();
-				cout << "consumiendo: " <<item << endl;
-				if ( item == "-1" ) break;
-				yield( rand() % 20 );
-			}
-		}
-};
-
-///////////////////////////////////////////
-
-/*string reconocedor(string entrada){
-	int estado = 0;
-	string pertenece="no";
-
-	for (int i=0;i<entrada.size();i++){
-
-		if (entrada[i] == 'G' && estado ==0){
-			estado=1;
-		}
-		else if (estado==0 && entrada[i]!='G'){
-			estado=0;
-		}
-
-		else if (estado==1 &&  entrada[i]=='C'){
-			estado=0;
-		}
-
-		else if ((estado==1 || estado==2) && entrada[i] == 'T'){
-			estado=2;
-		}
-
-		else if ((estado==1 || estado==2) && entrada[i]=='G'){
-			estado=1;
-		}
-
-		else if ((estado==0 || estado==1 || estado==2) && entrada[i]=='A'){
-			estado=0;
-		}
-
-		else if (estado==2 && entrada[i]=='C'){
-			estado=3;
-			pertenece="si";
-			break;
-		}
-	}
-	return pertenece;
-}
-
-*/
 
 void uMain::main(){
 
 	string nombreArchivoEntrada="in.txt";
 	string nombreArchivoSalida="out.txt";
 
-	//const int NoOfCons = 2, NoOfProds = 3;
-
-	const int cantidadProductoras = 1, cantidadReconocedoras = 9, cantidadEscritoras = 1;
-
-	//string linea;
-
-	/*ifstream archivoEntrada;
-
-	if (existeArchivo (nombreArchivo)){
-
-		archivoEntrada.open(nombreArchivo.c_str());
-
-		cout << "abierto correctamente" << endl;
-
-		while(!archivoEntrada.eof()){
-    		archivoEntrada >> linea;
-    		cout << linea << " " <<reconocedor(linea)<< endl;
-		}
-	}
-
-	else{
-
-		cout << "ta malo" << endl;
-
-	}
-
-	archivoEntrada.close();
-
-	*/
-
-	//BoundedBuffer buf; // Monitor///////////
+	const int cantidadProductoras = 1, cantidadReconocedoras = 3, cantidadEscritoras = 1;
 
 	BoundedBuffer bufferLector,bufferEscritor;
 
-	//Consumer *cons[NoOfCons]; // Tareas Consumidoras
-
-	//Producer *prods[NoOfProds]; // Tareas Productoras
-
-	//Productora *tareasProductoras[cantidadProductoras];
 	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
 	Escritora *tareasEscritoras[cantidadEscritoras];
-
-	/*for ( int i = 0; i < NoOfCons; i += 1 )
-		cons[i] = new Consumer( buf );
-
-	for ( int i = 0; i < NoOfProds; i += 1 )
-		prods[i] = new Producer( buf );*/
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
 		tareasReconocedoras[i] = new Reconocedora( bufferLector, bufferEscritor );
 
-	//for ( int i = 0; i < cantidadProductoras; i += 1 )
 	Productora *tareaProductora = new Productora( bufferLector, nombreArchivoEntrada );
 
-	for ( int i = 0; i < cantidadEscritoras; i += 1 )
-		tareasEscritoras[i] = new Escritora( bufferEscritor, nombreArchivoSalida );
-
-
-
-	/*for ( int i = 0; i < NoOfProds; i += 1 )
-		delete prods[i];
-
-	for ( int i = 0; i < NoOfCons; i += 1 )
-		buf.insert( "-1" );
-
-	for ( int i = 0; i < NoOfCons; i += 1 )
-		delete cons[i];*/
+	Escritora *tareaEscritora = new Escritora( bufferEscritor, nombreArchivoSalida );
 
 	delete tareaProductora;
-
-	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
-		bufferLector.insert( "-1" );
+	bufferLector.insert( "-1" );
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
 		delete tareasReconocedoras[i];
 
-	for ( int i = 0; i < cantidadEscritoras; i += 1 )
-		bufferEscritor.insert( "-1" );
+	bufferEscritor.insert( "-1" );
 
-	for ( int i = 0; i < cantidadEscritoras; i += 1 )
-		delete tareasEscritoras[i];
+	delete tareaEscritora;
 
 }
 
