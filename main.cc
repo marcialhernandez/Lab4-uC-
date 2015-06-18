@@ -196,12 +196,12 @@ _Monitor BoundedBuffer {
 			delete [] elements;
 		}
 
-		void cambiaEstado(bool estadoNuevo){
+		_Nomutex void cambiaEstado(bool estadoNuevo){
 			estadoLectura=estadoNuevo;
 		}
 
-		bool estadoTermino(){
-			if (estadoLectura==true && count <=0){
+		_Nomutex bool estadoTermino(){
+			if (estadoLectura==true && count <1){
 				return true;
 			}
 
@@ -356,6 +356,7 @@ _Task Reconocedora {
 
 			}
 		}
+		
 };
 
 _Task Escritora {
