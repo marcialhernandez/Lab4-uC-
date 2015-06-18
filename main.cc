@@ -276,7 +276,7 @@ _Task Productora {
 
 			else{
 
-				cout << "El archivo: '" <<nombreArchivoEntrada<< "' No existe."<< endl;
+				cout << "Error 9: El archivo: '" <<nombreArchivoEntrada<< "' No existe."<< endl;
 				exit(0);
 			}
 
@@ -348,6 +348,10 @@ _Task Reconocedora {
     			cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
     			}
 
+    			else{
+    				break;
+    			}
+
     			if ( BufferArchivoEntrada.estadoTermino()==true ) break;
 
 			}
@@ -396,9 +400,6 @@ void uMain::main(){
 		exit(1);
 	}
 
-	//string nombreArchivoEntrada="in.txt";
-	//string nombreArchivoSalida="out.txt";
-
 	BoundedBuffer bufferLector(largoBufferEntrada),bufferEscritor(largoBufferSalida);
 
 	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
@@ -412,7 +413,10 @@ void uMain::main(){
 	Productora *tareaProductora = new Productora( bufferLector, nombreArchivoEntrada );
 
 	delete tareaProductora;
+
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
 	bufferLector.insert( "-1" );
+	}
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
 		delete tareasReconocedoras[i];
