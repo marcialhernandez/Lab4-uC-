@@ -133,30 +133,35 @@ bool recibeArgumentosConsola(int argc, char **argv, string *nombreEntrada, strin
 		return false;
 	}
 
+	if (bandera_o==0){
+		cout << "Error 3: No se ha especificado archivo de salida." << endl;
+		return false;
+	}
+
 	if (bandera_h==0){
-		cout << "Error 3: No se ha especificado la cantidad de tareas reconocedoras." << endl;
+		cout << "Error 4: No se ha especificado la cantidad de tareas reconocedoras." << endl;
 		return false;
 	}
 
 	if (banderaErrorParametros>0){
 
 		if (estadoValorBufferEntrada==false){
-			cout << "Error 4: El largo del buffer de lectura no puede ser cero." << endl;
+			cout << "Error 5: El largo del buffer de lectura no puede ser cero." << endl;
 			return false;
 		}
 
 		else if (estadoValorBufferSalida==false){
-			cout << "Error 5: El largo del buffer de escritura no puede ser cero." << endl;
+			cout << "Error 6: El largo del buffer de escritura no puede ser cero." << endl;
 			return false;
 		}
 
 		else if (estadoNumeroTareas==false){
-			cout << "Error 6: La cantidad de tareas reconocedoras no puede ser cero." << endl;
+			cout << "Error 7: La cantidad de tareas reconocedoras no puede ser cero." << endl;
 			return false;
 		}
 
 		else{
-			cout << "Error 7: Una de las entradas de las banderas -h -L o -l no es valida." << endl;
+			cout << "Error 8: Una de las entradas de las banderas -h -L o -l no es valida." << endl;
 			return false;
 		}
 	}
@@ -169,10 +174,9 @@ bool recibeArgumentosConsola(int argc, char **argv, string *nombreEntrada, strin
 
 _Monitor BoundedBuffer {
 
-	int front, back, count;
+	int front, back, count, largoBuffer;
 	bool estadoLectura=false;
 	string *elements;
-	int largoBuffer;
 
 	public:
 
@@ -384,19 +388,24 @@ _Task Escritora {
 
 void uMain::main(){
 
-	string nombreArchivoEntrada="in.txt";
-	string nombreArchivoSalida="out.txt";
+	string nombreArchivoEntrada, nombreArchivoSalida;
 
-	cout << argc << endl;
+	int cantidadReconocedoras,largoBufferEntrada=10,largoBufferSalida=10;
 
-	const int cantidadReconocedoras = 3;
+	if (recibeArgumentosConsola(argc, argv, &nombreArchivoEntrada, &nombreArchivoSalida,&cantidadReconocedoras, &largoBufferEntrada, &largoBufferSalida) ==false){
+		exit(1);
+	}
 
-	BoundedBuffer bufferLector(4),bufferEscritor(1);
+	//string nombreArchivoEntrada="in.txt";
+	//string nombreArchivoSalida="out.txt";
+
+	BoundedBuffer bufferLector(largoBufferEntrada),bufferEscritor(largoBufferSalida);
 
 	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
 
-	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
 		tareasReconocedoras[i] = new Reconocedora( bufferLector, bufferEscritor );
+	}
 
 	Escritora *tareaEscritora = new Escritora( bufferEscritor, nombreArchivoSalida );
 
@@ -405,8 +414,9 @@ void uMain::main(){
 	delete tareaProductora;
 	bufferLector.insert( "-1" );
 
-	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
+	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
 		delete tareasReconocedoras[i];
+	}
 
 	bufferEscritor.insert( "-1" );
 
