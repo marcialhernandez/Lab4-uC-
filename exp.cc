@@ -103,6 +103,7 @@ bool recibeArgumentosConsola(int argc, char **argv, string *nombreEntrada, strin
 					  }
 
 				  }
+				  
 				  else{
 					  banderaErrorBanderas++;						
 				  }
@@ -186,7 +187,7 @@ _Monitor BoundedBuffer {
 			count=0;
 			largoBuffer=largo;
 			elements=new string[largoBuffer];
-			cout << "buffer tam '" << largoBuffer <<"' creado!!" << endl;
+			// cout << "buffer tam '" << largoBuffer <<"' creado!!" << endl;
 
 		} //front(0), back(0), count(0) {}
 
@@ -258,14 +259,14 @@ _Task Productora {
 
 				archivoEntrada.open(nombreArchivoEntrada.c_str());
 
-				cout << "El archivo: '" <<nombreArchivoEntrada<< "' ha sido abierto correctamente."<< endl;
+				//cout << "El archivo: '" <<nombreArchivoEntrada<< "' ha sido abierto correctamente."<< endl;
 
 				while(!archivoEntrada.eof()){
     		
     				archivoEntrada >> linea;
     				BufferArchivoEntrada.insert( linea );
     				cantidadLineasArchivo+=1;
-    				cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
+    			//	cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
 
 				}
 
@@ -276,7 +277,7 @@ _Task Productora {
 
 			else{
 
-				cout << "Error 9: El archivo: '" <<nombreArchivoEntrada<< "' No existe."<< endl;
+				cout << "Error 9: El archivo: '" <<nombreArchivoEntrada<< "' no existe."<< endl;
 				exit(0);
 			}
 
@@ -297,8 +298,9 @@ _Task Reconocedora {
 		string check(string entrada){
 			int estado = 0;
 			string pertenece="no";
+			int tamEntrada=int(entrada.size());
 
-			for (int i=0;i<entrada.size();i++){
+			for (int i=0;i<tamEntrada;i++){
 
 				if (entrada[i] == 'G' && estado ==0){
 					estado=1;
@@ -340,19 +342,20 @@ _Task Reconocedora {
 			while (BufferArchivoEntrada.estadoTermino()==false){
 
 				item = BufferArchivoEntrada.remove();
+
 				if (item!="-1"){
 
-				item+=" "+check(item);
-				cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
-				BufferArchivoSalida.insert( item );
-    			cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
+					item+=" "+check(item);
+					//cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
+					BufferArchivoSalida.insert( item );
+    				//cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
+
     			}
 
     			else{
+
     				break;
     			}
-
-    			if ( BufferArchivoEntrada.estadoTermino()==true ) break;
 
 			}
 		}
@@ -373,20 +376,51 @@ _Task Escritora {
 		void main() {
 
 			string item;
-			for ( ;; ) {
+			bool avisaInicio=true;
 
-				item = BufferArchivoSalida.remove();
+			ofstream archivoSalida (nombreArchivoSalida.c_str());
+			if (archivoSalida.is_open()){
 
-				if ( item!= "-1"){
+				for ( ;; ) {
 
-				cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
+					item = BufferArchivoSalida.remove();
+
+					if ( item!= "-1"){
+
+						//cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
+				
+						if (avisaInicio==true){
+
+							archivoSalida << item;
+							avisaInicio=false;
+
+						}
+
+						else{
+
+							archivoSalida <<endl<<item;
+
+						}
+
+					}
+
+					else{
+
+						break;
+					}
 
 				}
 
-				else{
-					break;
-				}
+				archivoSalida.close();
+
 			}
+
+			else {
+
+				cout << "Error 10: El archivo: '" <<nombreArchivoSalida<< "' no se puede abrir."<< endl;
+				exit(0);
+			}
+
 		}
 
 };
@@ -406,6 +440,7 @@ void uMain::main(){
 	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
+
 		tareasReconocedoras[i] = new Reconocedora( bufferLector, bufferEscritor );
 	}
 
@@ -416,10 +451,12 @@ void uMain::main(){
 	delete tareaProductora;
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
-	bufferLector.insert( "-1" );
+
+		bufferLector.insert( "-1" );
 	}
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 ){
+
 		delete tareasReconocedoras[i];
 	}
 
@@ -432,6 +469,3 @@ void uMain::main(){
 	bufferEscritor.free();
 
 }
-
-//Forma de compilar: u++ main.cc -o main
-//A pesar de que la funcion main no tiene como entrada argc y argv, en realidad si existen!
