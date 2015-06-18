@@ -12,14 +12,29 @@ using namespace std;
 //		"no" en caso contrario
 
 _Monitor BoundedBuffer {
-	
+
 	int front, back, count;
 	bool estadoLectura=false;
-	string elements[20];
+	string *elements;
+	int largoBuffer;
 
 	public:
 
-		BoundedBuffer() : front(0), back(0), count(0) {}
+		BoundedBuffer(int largo){
+			front=0;
+			back=0;
+			count=0;
+			largoBuffer=largo;
+			elements=new string[largoBuffer];
+			cout << "buffer tam '" << largoBuffer <<"' creado!!" << endl;
+
+		} //front(0), back(0), count(0) {}
+
+		~BoundedBuffer(){}
+
+		void free(){
+			delete [] elements;
+		}
 
 		void cambiaEstado(bool estadoNuevo){
 			estadoLectura=estadoNuevo;
@@ -41,16 +56,16 @@ _Monitor BoundedBuffer {
 };
 
 void BoundedBuffer::insert(string elem) { 
-			if (count == 20) _Accept( remove );
+			if (count == largoBuffer) _Accept( remove );
 			elements[back] = elem;
-			back = (back+1)% 20;
+			back = (back+1)% largoBuffer;
 			count += 1;
 }
 
 string BoundedBuffer::remove() {
 			if (count == 0) _Accept( insert );
 			string elem = elements[front];
-			front = (front+1)%20;
+			front = (front+1)%largoBuffer;
 			count -= 1;
 			return elem;
 };
@@ -216,19 +231,18 @@ void uMain::main(){
 	string nombreArchivoEntrada="in.txt";
 	string nombreArchivoSalida="out.txt";
 
-	const int cantidadProductoras = 1, cantidadReconocedoras = 3, cantidadEscritoras = 1;
+	const int cantidadReconocedoras = 3;
 
-	BoundedBuffer bufferLector,bufferEscritor;
+	BoundedBuffer bufferLector(4),bufferEscritor(1);
 
 	Reconocedora *tareasReconocedoras[cantidadReconocedoras];
-	Escritora *tareasEscritoras[cantidadEscritoras];
 
 	for ( int i = 0; i < cantidadReconocedoras; i += 1 )
 		tareasReconocedoras[i] = new Reconocedora( bufferLector, bufferEscritor );
 
-	Productora *tareaProductora = new Productora( bufferLector, nombreArchivoEntrada );
-
 	Escritora *tareaEscritora = new Escritora( bufferEscritor, nombreArchivoSalida );
+
+	Productora *tareaProductora = new Productora( bufferLector, nombreArchivoEntrada );
 
 	delete tareaProductora;
 	bufferLector.insert( "-1" );
@@ -239,6 +253,10 @@ void uMain::main(){
 	bufferEscritor.insert( "-1" );
 
 	delete tareaEscritora;
+
+	bufferLector.free();
+
+	bufferEscritor.free();
 
 }
 
