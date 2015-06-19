@@ -12,7 +12,7 @@ int isNumber(const string entradaConsola, int * entradaPrograma ){
 		}
 	}
 
-	*entradaPrograma=stoi(entradaConsola);
+	*entradaPrograma=atoi(entradaConsola.c_str());
 
 	return 0;
 }
