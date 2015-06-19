@@ -25,7 +25,7 @@ BufferComun::BufferComun(int largo){
 			count=0;
 			largoBuffer=largo;
 			elements=new string[largoBuffer];
-
+			estadoLectura=false;
 		} 
 
 

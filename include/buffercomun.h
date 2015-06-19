@@ -11,7 +11,7 @@ using namespace std;
 _Monitor BufferComun {
 
 	int front, back, count, largoBuffer;
-	bool estadoLectura=false;
+	bool estadoLectura;
 	string *elements;
 
 	public:
