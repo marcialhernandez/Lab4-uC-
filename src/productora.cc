@@ -19,9 +19,13 @@ void Productora::main() {
 
 		while(!archivoEntrada.eof()){
 	
+			linea="";
 			archivoEntrada >> linea;
-			BufferArchivoEntrada.insert( linea );
-		//	cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
+
+			if (linea!=""){
+				BufferArchivoEntrada.insert( linea );
+				//cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
+			}
 
 		}
 

@@ -2,39 +2,17 @@
 
 void Escritora::main() {
 
-	string item;
-	bool avisaInicio=true;
+	string item=BufferArchivoSalida.remove();
 
 	ofstream archivoSalida (nombreArchivoSalida.c_str());
 	if (archivoSalida.is_open()){
 
-		for ( ;; ) {
+
+		while ( item!= "-1" ) {
+
+			archivoSalida <<item << endl;
 
 			item = BufferArchivoSalida.remove();
-
-			if ( item!= "-1"){
-
-				//cout << "L: '" <<item << "'' Escrita en " << nombreArchivoSalida << endl;
-		
-				if (avisaInicio==true){
-
-					archivoSalida << item;
-					avisaInicio=false;
-
-				}
-
-				else{
-
-					archivoSalida <<endl<<item;
-
-				}
-
-			}
-
-			else{
-
-				break;
-			}
 
 		}
 
