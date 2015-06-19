@@ -54,13 +54,14 @@ void Reconocedora::main() {
 			//cout << "L: '" <<item <<"' reconocida de bufferEntrada"<< endl;
 			BufferArchivoSalida.insert( item );
 			//cout <<"Se ha insertado el item: '" << item <<"' en bufferSalida"<<endl;
-
 		}
 
 		else{
 
 			break;
 		}
+
+		yield(2); //cambio de contexto ->Depende del planificador cambiarlo o no
 
 	}
 }

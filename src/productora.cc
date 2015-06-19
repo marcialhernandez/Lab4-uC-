@@ -27,6 +27,8 @@ void Productora::main() {
 				//cout <<"Se ha insertado la linea: '" << linea <<"' en bufferEntrada"<<endl;
 			}
 
+			yield(2); //cambio de contexto ->Depende del planificador cambiarlo o no
+
 		}
 
 		BufferArchivoEntrada.cambiaEstado(true);

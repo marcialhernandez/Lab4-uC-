@@ -13,6 +13,7 @@ void Escritora::main() {
 			archivoSalida <<item << endl;
 
 			item = BufferArchivoSalida.remove();
+			yield(2); //cambio de contexto ->Depende del planificador cambiarlo o no
 
 		}
 
