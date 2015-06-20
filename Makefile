@@ -9,9 +9,7 @@ objects:=$(tmp)/reconocedora.o $(tmp)/entradaconsola.o $(tmp)/buffercomun.o $(tm
 
 sources:=$(src)/reconocedora.cc $(src)/entradaconsola.cc $(src)/buffercomun.cc $(src)/productora.cc $(src)/escritora.cc
 
-#-std=c++0x -O3
-#cxxflags:= -g -Wall
-cxxflags:= -g -Wall
+cxxflags:= -g -Wall -O3
 cxx:=u++ -multi
 
 includes:=-I./ -I./include -I../api/include
